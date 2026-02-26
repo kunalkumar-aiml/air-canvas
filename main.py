@@ -22,16 +22,31 @@ def main():
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
                 x, y = tracker.get_index_tip(frame, hand_landmarks)
-                drawer.draw(frame, x, y)
+
+                drawer.draw(x, y)
                 tracker.draw_landmarks(frame, hand_landmarks)
         else:
             drawer.reset_position()
 
         output = drawer.get_output(frame)
+
+        cv2.putText(output, "Press C to Clear | S to Save | Q to Quit",
+                    (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 0),
+                    2)
+
         cv2.imshow("Air Canvas", output)
 
-        if cv2.waitKey(1) & 0xFF == ord("q"):
+        key = cv2.waitKey(1) & 0xFF
+
+        if key == ord("q"):
             break
+        elif key == ord("c"):
+            drawer.clear_canvas()
+        elif key == ord("s"):
+            drawer.save_canvas()
 
     cap.release()
     cv2.destroyAllWindows()
