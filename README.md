@@ -19,6 +19,19 @@ the drawing on a virtual canvas in real time.
 
 pip install -r requirements.txt
 
+## Features
+
+- Real-time hand tracking
+- Air drawing with index finger
+- Clear canvas option
+- Save drawing locally
+
+## Controls
+
+C - Clear canvas  
+S - Save drawing  
+Q - Quit
+
 ## Run
 
 python main.py
