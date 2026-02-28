@@ -27,3 +27,15 @@ class HandTracker:
         h, w, _ = frame.shape
         index_tip = hand_landmarks.landmark[8]
         return int(index_tip.x * w), int(index_tip.y * h)
+
+    def fingers_up(self, hand_landmarks):
+        tips = [8, 12, 16, 20]
+        fingers = []
+
+        for tip in tips:
+            if hand_landmarks.landmark[tip].y < hand_landmarks.landmark[tip - 2].y:
+                fingers.append(1)
+            else:
+                fingers.append(0)
+
+        return fingers
