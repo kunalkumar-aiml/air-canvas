@@ -9,6 +9,13 @@ def main():
     tracker = HandTracker()
     drawer = Drawer()
 
+    colors = {
+        "blue": (255, 0, 0),
+        "green": (0, 255, 0),
+        "red": (0, 0, 255),
+        "yellow": (0, 255, 255)
+    }
+
     while True:
         success, frame = cap.read()
         if not success:
@@ -17,24 +24,50 @@ def main():
         frame = cv2.flip(frame, 1)
         drawer.initialize_canvas(frame)
 
+        # Draw color buttons
+        cv2.rectangle(frame, (10, 10), (110, 60), colors["blue"], -1)
+        cv2.rectangle(frame, (120, 10), (220, 60), colors["green"], -1)
+        cv2.rectangle(frame, (230, 10), (330, 60), colors["red"], -1)
+        cv2.rectangle(frame, (340, 10), (440, 60), colors["yellow"], -1)
+
         results = tracker.detect(frame)
 
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
                 x, y = tracker.get_index_tip(frame, hand_landmarks)
+                fingers = tracker.fingers_up(hand_landmarks)
 
-                drawer.draw(x, y)
+                # Only index finger up → Draw
+                if fingers[0] == 1 and sum(fingers) == 1:
+                    drawer.draw(x, y)
+
+                # Two fingers up → Erase
+                elif fingers[0] == 1 and fingers[1] == 1:
+                    drawer.clear_canvas()
+
+                else:
+                    drawer.reset_position()
+
+                # Color selection
+                if y < 60:
+                    if 10 < x < 110:
+                        drawer.set_color(colors["blue"])
+                    elif 120 < x < 220:
+                        drawer.set_color(colors["green"])
+                    elif 230 < x < 330:
+                        drawer.set_color(colors["red"])
+                    elif 340 < x < 440:
+                        drawer.set_color(colors["yellow"])
+
                 tracker.draw_landmarks(frame, hand_landmarks)
-        else:
-            drawer.reset_position()
 
         output = drawer.get_output(frame)
 
-        cv2.putText(output, "Press C to Clear | S to Save | Q to Quit",
-                    (10, 30),
+        cv2.putText(output, "Q - Quit | S - Save",
+                    (10, 90),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.7,
-                    (0, 255, 0),
+                    (255, 255, 255),
                     2)
 
         cv2.imshow("Air Canvas", output)
@@ -43,8 +76,6 @@ def main():
 
         if key == ord("q"):
             break
-        elif key == ord("c"):
-            drawer.clear_canvas()
         elif key == ord("s"):
             drawer.save_canvas()
 
