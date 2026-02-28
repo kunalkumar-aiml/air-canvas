@@ -9,7 +9,10 @@ class Drawer:
         self.prev_x = None
         self.prev_y = None
         self.color = (255, 0, 0)
+        self.brush_thickness = 6
+        self.eraser_thickness = 40
         self.last_save_time = 0
+        self.erase_mode = False
 
     def initialize_canvas(self, frame):
         if self.canvas is None:
@@ -19,7 +22,13 @@ class Drawer:
         if self.prev_x is None:
             self.prev_x, self.prev_y = x, y
 
-        cv2.line(self.canvas, (self.prev_x, self.prev_y), (x, y), self.color, 6)
+        if self.erase_mode:
+            cv2.line(self.canvas, (self.prev_x, self.prev_y), (x, y),
+                     (0, 0, 0), self.eraser_thickness)
+        else:
+            cv2.line(self.canvas, (self.prev_x, self.prev_y), (x, y),
+                     self.color, self.brush_thickness)
+
         self.prev_x, self.prev_y = x, y
 
     def reset_position(self):
@@ -39,7 +48,11 @@ class Drawer:
             print(f"Saved: {filename}")
 
     def set_color(self, color):
+        self.erase_mode = False
         self.color = color
+
+    def enable_eraser(self):
+        self.erase_mode = True
 
     def get_output(self, frame):
         return cv2.add(frame, self.canvas)
