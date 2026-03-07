@@ -4,7 +4,6 @@ import config
 from hand_tracker import HandTracker
 from drawing import Drawer
 from logger import setup_logger
-from digit_recognizer import DigitRecognizer
 
 
 def main():
@@ -15,11 +14,8 @@ def main():
 
     tracker = HandTracker()
     drawer = Drawer()
-    recognizer = DigitRecognizer()
 
     prev_time = 0
-
-    prediction_text = ""
 
     while True:
 
@@ -37,27 +33,34 @@ def main():
 
         for name, color in config.COLORS.items():
 
-            cv2.rectangle(frame,
-                          (x_offset, 10),
-                          (x_offset + 100, config.UI_HEIGHT),
-                          color,
-                          -1)
+            cv2.rectangle(
+                frame,
+                (x_offset, 10),
+                (x_offset + 100, config.UI_HEIGHT),
+                color,
+                -1
+            )
 
             x_offset += 110
 
-        cv2.rectangle(frame,
-                      (x_offset, 10),
-                      (x_offset + 100, config.UI_HEIGHT),
-                      (0, 0, 0),
-                      -1)
+        # Erase button
+        cv2.rectangle(
+            frame,
+            (x_offset, 10),
+            (x_offset + 100, config.UI_HEIGHT),
+            (0, 0, 0),
+            -1
+        )
 
-        cv2.putText(frame,
-                    "Erase",
-                    (x_offset + 10, 45),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6,
-                    (255, 255, 255),
-                    2)
+        cv2.putText(
+            frame,
+            "Erase",
+            (x_offset + 10, 45),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (255, 255, 255),
+            2
+        )
 
         results = tracker.detect(frame)
 
@@ -94,36 +97,38 @@ def main():
                             drawer.enable_eraser()
 
                 else:
-
                     drawer.reset_position()
 
                 tracker.draw_landmarks(frame, hand_landmarks)
 
         output = drawer.get_output(frame)
 
-        # FPS
+        # FPS Counter
         current_time = time.time()
 
         fps = 1 / (current_time - prev_time) if prev_time else 0
 
         prev_time = current_time
 
-        cv2.putText(output,
-                    f"FPS: {int(fps)}",
-                    (10, 100),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.7,
-                    (255, 255, 255),
-                    2)
+        cv2.putText(
+            output,
+            f"FPS: {int(fps)}",
+            (10, 100),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 255),
+            2
+        )
 
-        # Prediction display
-        cv2.putText(output,
-                    prediction_text,
-                    (10, 150),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 255, 0),
-                    3)
+        cv2.putText(
+            output,
+            "Q - Quit | S - Save",
+            (10, 130),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 255),
+            2
+        )
 
         cv2.imshow("Air Canvas", output)
 
@@ -133,14 +138,7 @@ def main():
             break
 
         elif key == ord("s"):
-
             drawer.save_canvas()
-
-        elif key == ord("p"):
-
-            digit, conf = recognizer.predict(drawer.canvas)
-
-            prediction_text = f"Prediction: {digit} ({conf:.2f})"
 
     cap.release()
 
