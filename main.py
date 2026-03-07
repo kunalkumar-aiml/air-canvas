@@ -28,18 +28,24 @@ def main():
 
         drawer.initialize_canvas(frame)
 
-        # Color buttons
+        # Draw color buttons
         x_offset = 10
+        color_positions = []
 
         for name, color in config.COLORS.items():
 
+            x1 = x_offset
+            x2 = x_offset + 100
+
             cv2.rectangle(
                 frame,
-                (x_offset, 10),
-                (x_offset + 100, config.UI_HEIGHT),
+                (x1, 10),
+                (x2, config.UI_HEIGHT),
                 color,
                 -1
             )
+
+            color_positions.append((x1, x2, color))
 
             x_offset += 110
 
@@ -55,32 +61,28 @@ def main():
 
                 finger_count = sum(fingers)
 
-                # 1 finger → draw
+                # DRAW MODE
                 if finger_count == 1 and fingers[0] == 1:
 
                     drawer.draw(x, y)
 
-                # 5 fingers → erase
-                elif finger_count == 4:
-
-                    drawer.erase(x, y)
-
-                # 2 fingers → color select
+                # COLOR SELECT MODE
                 elif finger_count == 2:
 
                     drawer.reset_position()
 
                     if y < config.UI_HEIGHT:
 
-                        x_offset = 10
+                        for (x1, x2, color) in color_positions:
 
-                        for name, color in config.COLORS.items():
-
-                            if x_offset < x < x_offset + 100:
+                            if x1 < x < x2:
 
                                 drawer.set_color(color)
 
-                            x_offset += 110
+                # ERASE MODE
+                elif finger_count >= 4:
+
+                    drawer.erase(x, y)
 
                 else:
 
@@ -107,6 +109,16 @@ def main():
             2
         )
 
+        cv2.putText(
+            output,
+            "1 finger: Draw | 2 fingers: Select Color | Open hand: Erase",
+            (10, 130),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (255, 255, 255),
+            2
+        )
+
         cv2.imshow("Air Canvas", output)
 
         key = cv2.waitKey(1) & 0xFF
@@ -118,7 +130,6 @@ def main():
             drawer.save_canvas()
 
     cap.release()
-
     cv2.destroyAllWindows()
 
 
