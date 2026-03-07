@@ -1,4 +1,5 @@
 import cv2
+import time
 import config
 from hand_tracker import HandTracker
 from drawing import Drawer
@@ -6,83 +7,126 @@ from drawing import Drawer
 
 def main():
 
-    cap = cv2.VideoCapture(config.CAMERA_INDEX)
+    cap=cv2.VideoCapture(config.CAMERA_INDEX)
 
-    tracker = HandTracker()
-    drawer = Drawer()
+    tracker=HandTracker()
+    drawer=Drawer()
 
-    tool = "draw"
+    prev_time=0
 
     while True:
 
-        success,frame = cap.read()
+        success,frame=cap.read()
 
         if not success:
             break
 
-        frame = cv2.flip(frame,1)
+        frame=cv2.flip(frame,1)
 
-        drawer.initialize_canvas(frame)
+        drawer.initialize(frame)
 
-        # TOOL BUTTONS
-        cv2.rectangle(frame,(10,10),(120,70),(50,50,50),-1)
-        cv2.putText(frame,"COLOR",(20,50),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
+        # draw color palette
+        x_offset=10
 
-        cv2.rectangle(frame,(130,10),(240,70),(50,50,50),-1)
-        cv2.putText(frame,"BRUSH",(140,50),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
+        color_positions=[]
 
-        cv2.rectangle(frame,(260,10),(370,70),(50,50,50),-1)
-        cv2.putText(frame,"SHAPE",(270,50),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255),2)
+        for color in config.COLORS:
 
-        results = tracker.detect(frame)
+            x1=x_offset
+            x2=x_offset+60
+
+            cv2.rectangle(frame,(x1,10),(x2,70),color,-1)
+
+            color_positions.append((x1,x2,color))
+
+            x_offset+=70
+
+        results=tracker.detect(frame)
 
         if results.multi_hand_landmarks:
 
             for hand in results.multi_hand_landmarks:
 
-                x,y = tracker.get_index_tip(frame,hand)
+                x,y=tracker.get_index_tip(frame,hand)
 
-                fingers = tracker.fingers_up(hand)
+                fingers=tracker.fingers_up(hand)
 
-                count = sum(fingers)
+                count=sum(fingers)
 
-                if count == 1:
+                # DRAW
+                if count==1 and fingers[0]==1:
 
-                    if tool == "draw":
-                        drawer.draw(x,y)
+                    drawer.draw(x,y)
 
-                    elif tool == "erase":
-                        drawer.erase(x,y)
-
-                elif count == 2:
+                # COLOR SELECT
+                elif count==2:
 
                     drawer.reset()
 
-                    if y < config.UI_HEIGHT:
+                    if y<config.UI_HEIGHT:
 
-                        if 10 < x < 120:
-                            tool = "color"
+                        for (x1,x2,color) in color_positions:
 
-                        elif 130 < x < 240:
-                            tool = "brush"
+                            if x1<x<x2:
 
-                        elif 260 < x < 370:
-                            tool = "shape"
+                                drawer.set_color(color)
 
-                elif count >= 4:
+                # ERASE
+                elif count>=4:
 
                     drawer.erase(x,y)
 
-        output = drawer.output(frame)
+                else:
+
+                    drawer.reset()
+
+                tracker.draw_landmarks(frame,hand)
+
+        output=drawer.output(frame)
+
+        # FPS
+        current=time.time()
+
+        fps=1/(current-prev_time) if prev_time else 0
+
+        prev_time=current
+
+        cv2.putText(
+            output,
+            f"FPS:{int(fps)}",
+            (10,100),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255,255,255),
+            2
+        )
+
+        cv2.putText(
+            output,
+            "1 finger draw | 2 fingers select | open hand erase",
+            (10,130),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (255,255,255),
+            2
+        )
 
         cv2.imshow("AirCanvas",output)
 
-        if cv2.waitKey(1) & 0xFF == ord("q"):
+        key=cv2.waitKey(1)&0xFF
+
+        if key==ord("q"):
             break
+
+        elif key==ord("s"):
+            drawer.save()
+
+        elif key==ord("c"):
+            drawer.clear()
 
     cap.release()
     cv2.destroyAllWindows()
 
 
-if __name__ == "__main__":
+if __name__=="__main__":
     main()
