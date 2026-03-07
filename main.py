@@ -103,11 +103,9 @@ def main():
 
         output = drawer.get_output(frame)
 
-        # FPS Counter
+        # FPS counter
         current_time = time.time()
-
         fps = 1 / (current_time - prev_time) if prev_time else 0
-
         prev_time = current_time
 
         cv2.putText(
@@ -141,7 +139,6 @@ def main():
             drawer.save_canvas()
 
     cap.release()
-
     cv2.destroyAllWindows()
 
 
