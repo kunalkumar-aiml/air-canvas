@@ -1,6 +1,8 @@
 CAMERA_INDEX = 0
 
-BRUSH_SIZES = [3, 8, 15]
+UI_HEIGHT = 80
+
+BRUSH_SIZES = [3,8,15]
 
 COLORS = [
     (255,0,0),
@@ -10,6 +12,5 @@ COLORS = [
     (255,0,255),
     (0,255,255),
     (255,255,255),
+    (0,0,0)
 ]
-
-UI_HEIGHT = 80
