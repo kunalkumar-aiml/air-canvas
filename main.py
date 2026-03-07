@@ -28,7 +28,7 @@ def main():
 
         drawer.initialize_canvas(frame)
 
-        # UI Buttons
+        # Color buttons
         x_offset = 10
 
         for name, color in config.COLORS.items():
@@ -43,25 +43,6 @@ def main():
 
             x_offset += 110
 
-        # Erase button
-        cv2.rectangle(
-            frame,
-            (x_offset, 10),
-            (x_offset + 100, config.UI_HEIGHT),
-            (0, 0, 0),
-            -1
-        )
-
-        cv2.putText(
-            frame,
-            "Erase",
-            (x_offset + 10, 45),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            (255, 255, 255),
-            2
-        )
-
         results = tracker.detect(frame)
 
         if results.multi_hand_landmarks:
@@ -72,13 +53,20 @@ def main():
 
                 fingers = tracker.fingers_up(hand_landmarks)
 
-                # Draw mode
-                if fingers[0] == 1 and sum(fingers) == 1:
+                finger_count = sum(fingers)
+
+                # 1 finger → draw
+                if finger_count == 1 and fingers[0] == 1:
 
                     drawer.draw(x, y)
 
-                # Selection mode
-                elif fingers[0] == 1 and fingers[1] == 1:
+                # 5 fingers → erase
+                elif finger_count == 4:
+
+                    drawer.erase(x, y)
+
+                # 2 fingers → color select
+                elif finger_count == 2:
 
                     drawer.reset_position()
 
@@ -89,14 +77,13 @@ def main():
                         for name, color in config.COLORS.items():
 
                             if x_offset < x < x_offset + 100:
+
                                 drawer.set_color(color)
 
                             x_offset += 110
 
-                        if x_offset < x < x_offset + 100:
-                            drawer.enable_eraser()
-
                 else:
+
                     drawer.reset_position()
 
                 tracker.draw_landmarks(frame, hand_landmarks)
@@ -105,23 +92,15 @@ def main():
 
         # FPS counter
         current_time = time.time()
+
         fps = 1 / (current_time - prev_time) if prev_time else 0
+
         prev_time = current_time
 
         cv2.putText(
             output,
             f"FPS: {int(fps)}",
             (10, 100),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.7,
-            (255, 255, 255),
-            2
-        )
-
-        cv2.putText(
-            output,
-            "Q - Quit | S - Save",
-            (10, 130),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.7,
             (255, 255, 255),
@@ -139,6 +118,7 @@ def main():
             drawer.save_canvas()
 
     cap.release()
+
     cv2.destroyAllWindows()
 
 
